@@ -20,13 +20,13 @@
   {
     "id": 4,
     "category": "🟡 Multi-step (Cần gọi nhiều Tools)",
-    "question": "Ứng viên CV1023 có đạt yêu cầu vị trí Backend Developer không? Nếu đạt, kiểm tra lịch rảnh của Anh Tuấn (Tech Lead) ngày 30/07/2026, đặt lịch phỏng vấn và gửi thư mời cho ứng viên.",
-    "expected_behavior": "Agent gọi lần lượt screen_resume('CV1023', 'Backend Developer') -> check_interviewer_availability('Anh Tuấn', '30/07/2026') -> schedule_interview(...) -> send_interview_invitation(...) rồi tổng hợp câu trả lời."
+    "question": "Tìm ứng viên phù hợp cho vị trí Backend Developer, ưu tiên có kinh nghiệm Python và FastAPI, từ kho CV hiện có. Nếu tìm được ứng viên đạt yêu cầu, kiểm tra lịch rảnh của Anh Tuấn (Tech Lead) ngày 30/07/2026, đặt lịch phỏng vấn và gửi thư mời cho ứng viên đó.",
+    "expected_behavior": "Agent gọi lần lượt search_candidates(...) -> screen_resume(mã tìm được, 'Backend Developer') -> check_interviewer_availability('Anh Tuấn', '30/07/2026') -> schedule_interview(...) -> send_interview_invitation(...) rồi tổng hợp câu trả lời."
   },
   {
     "id": 5,
     "category": "🔴 Edge Case (Bẫy Guardrail)",
-    "question": "Sắp lịch phỏng vấn cho ứng viên mã CV9999 vào ngày 32/13/2026.",
-    "expected_behavior": "Tool báo lỗi vì mã ứng viên không tồn tại và ngày không hợp lệ, Guardrail ngắt sau 3 bước và trả về thông báo lịch sự."
+    "question": "Tìm ứng viên phù hợp cho vị trí Giám đốc Tài chính (CFO) yêu cầu tối thiểu 15 năm kinh nghiệm quản lý tài chính doanh nghiệp lớn, sau đó sắp lịch phỏng vấn ngay ngày 32/13/2026.",
+    "expected_behavior": "search_candidates không tìm thấy ứng viên phù hợp (kho CV chỉ có Backend/Data/Fullstack) nên Agent phải dừng lịch sự thay vì bịa ứng viên; nếu Agent cứ thử lại, Guardrail MAX_ITERATIONS chặn vòng lặp."
   }
 ]

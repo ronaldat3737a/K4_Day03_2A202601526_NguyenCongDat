@@ -23,6 +23,11 @@ class BaseLLMProvider:
     def generate(self, prompt: str, system_prompt: str = "") -> str:
         raise NotImplementedError
 
+    def generate_stream(self, prompt: str, system_prompt: str = ""):
+        """Mặc định: chưa hỗ trợ streaming thật, trả nguyên câu trả lời làm 1 chunk duy nhất.
+        ponytail: chỉ OpenAIProvider stream token-thật bên dưới; nâng cấp provider khác khi cần."""
+        yield self.generate(prompt, system_prompt)
+
 
 class GeminiProvider(BaseLLMProvider):
     """Google Gemini Provider"""
@@ -71,6 +76,30 @@ class OpenAIProvider(BaseLLMProvider):
             return response.choices[0].message.content
         except Exception as e:
             return f"[OpenAI Exception]: {str(e)}"
+
+    def generate_stream(self, prompt: str, system_prompt: str = ""):
+        if not self.api_key or self.api_key == "your_openai_api_key_here":
+            yield "[OpenAI Error]: Chưa cấu hình OPENAI_API_KEY trong file .env!"
+            return
+        try:
+            import openai
+            client = openai.OpenAI(api_key=self.api_key)
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+
+            stream = client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
+        except Exception as e:
+            yield f"[OpenAI Exception]: {str(e)}"
 
 
 class AnthropicProvider(BaseLLMProvider):
@@ -138,7 +167,12 @@ class MockProvider(BaseLLMProvider):
         text = prompt.lower()
         if "thời tiết" in text and "hà nội" in text:
             return "Thought: Cần tra cứu thời tiết Hà Nội.\nAction: get_weather['Hà Nội']"
-        return "🤖 [Mock Provider]: Phản hồi giả lập offline cho bài test."
+        return "[Mock Provider]: Phản hồi giả lập offline cho bài test."
+
+    def generate_stream(self, prompt: str, system_prompt: str = ""):
+        # ponytail: tách theo từ để mô phỏng hiệu ứng gõ live khi chạy offline không có API key
+        for word in self.generate(prompt, system_prompt).split(" "):
+            yield word + " "
 
 
 def get_llm_provider(provider_name: str = None) -> BaseLLMProvider:
