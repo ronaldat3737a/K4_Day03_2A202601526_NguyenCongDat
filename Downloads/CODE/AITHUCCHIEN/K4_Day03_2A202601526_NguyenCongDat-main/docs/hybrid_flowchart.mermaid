@@ -1,0 +1,39 @@
+graph LR
+    A[Bắt đầu: Người dùng đặt câu hỏi tuyển dụng] --> B{Phân loại câu hỏi}
+
+    B -->|Câu hỏi đơn giản<br/>Chỉ cần kiến thức tĩnh| C[Chatbot Path]
+    B -->|Câu hỏi phức tạp<br/>Cần tra cứu dữ liệu thực| D[ReAct Agent Path]
+
+    C --> C1[Trả lời từ knowledge tĩnh]
+    C1 --> C2[Kết thúc]
+
+    D --> D1[Suy luận Thought:<br/>Câu hỏi cần tool gì?]
+    D1 --> D2{Chọn công cụ phù hợp}
+
+    D2 -->|Sàng lọc hồ sơ| D3[Action: screen_resume<br/>Candidate Name + Vị trí]
+    D2 -->|So khớp kỹ năng| D4[Action: match_candidate<br/>Kỹ năng yêu cầu + Ứng viên]
+    D2 -->|Kiểm tra lịch| D5[Action: get_interview_schedule<br/>Ngày DD/MM/YYYY]
+    D2 -->|Đặt lịch| D6[Action: schedule_interview<br/>Tên + Ngày + Giờ]
+    D2 -->|Xếp hạng| D7[Action: rank_candidates<br/>Danh sách điểm]
+
+    D3 --> D8[Observation:<br/>Kết quả từ tool]
+    D4 --> D8
+    D5 --> D8
+    D6 --> D8
+    D7 --> D8
+
+    D8 --> D9{Đã đủ thông tin?}
+
+    D9 -->|Chưa đủ| D10[Tiếp tục vòng lặp<br/>Thought -> Action -> Observation]
+    D10 --> D2
+
+    D9 -->|Đã đủ| D11[Action: Final Answer<br/>Tổng hợp kết quả cho người dùng]
+
+    D11 --> C2
+
+    D2 -.->|Tham số không hợp lệ<br/>hoặc lỗi Tool| D12[Guardrail:<br/>Báo lỗi lịch sự<br/>và đề xuất sửa]
+    D12 --> D9
+
+    style C fill:#e1f5fe
+    style D fill:#fff3e0
+    style D12 fill:#ffebee

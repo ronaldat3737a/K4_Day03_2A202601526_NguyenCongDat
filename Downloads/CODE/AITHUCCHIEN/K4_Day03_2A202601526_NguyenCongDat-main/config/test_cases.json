@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "category": "🟢 Đơn giản (Chỉ cần LLM)",
+    "question": "Vị trí Junior Backend Developer cần yêu cầu gì về trình độ và kỹ năng?",
+    "expected_behavior": "Agent trả lời dựa trên knowledge tĩnh về yêu cầu tuyển dụng Junior Backend."
+  },
+  {
+    "id": 2,
+    "category": "🟢 Đơn giản (Chỉ cần LLM)",
+    "question": "Hồ sơ ứng viên Nguyễn Văn A có phù hợp cho vị trí Data Analyst không?",
+    "expected_behavior": "Agent phân tích hồ sơ, so khớp kỹ năng và đưa ra đánh giá phù hợp."
+  },
+  {
+    "id": 3,
+    "category": "🟡 Multi-step (Cần Tool)",
+    "question": "Tìm ứng viên phù hợp cho vị trí Frontend Developer và kiểm tra lịch phỏng vấn tuần tới.",
+    "expected_behavior": "Agent gọi screen_resume để tìm ứng viên Frontend, sau đó gọi get_interview_schedule để check lịch phỏng vấn."
+  },
+  {
+    "id": 4,
+    "category": "🟡 Multi-step (Cần gọi nhiều Tools)",
+    "question": "Sàng lọc 3 hồ sơ ứng viên, xếp hạng theo điểm kỹ năng, rồi hẹn phỏng vấn cho ứng viên xếp hạng nhất.",
+    "expected_behavior": "Agent gọi screen_resume cho từng hồ sơ, gọi rank_candidates để xếp hạng, sau đó gọi schedule_interview cho ứng viên top."
+  },
+  {
+    "id": 5,
+    "category": "🔴 Edge Case (Bẫy Guardrail)",
+    "question": "Sàng lọc hồ sơ cho vị trí không tồn tại và xếp lịch phỏng vấn ngày 32/13/2026.",
+    "expected_behavior": "Tool báo lỗi tham số không hợp lệ, Guardrail ngắt sau 3 bước và trả về thông báo lịch sự."
+  }
+]
