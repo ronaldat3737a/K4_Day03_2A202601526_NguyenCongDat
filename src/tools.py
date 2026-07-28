@@ -4,46 +4,40 @@
 Nơi định nghĩa các công cụ (Tools) cho ReAct Agent thực thi thao tác nghiệp vụ.
 """
 
+import json
 import os
 import re
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# 📚 KHO CV (Nguồn dữ liệu dùng chung cho mọi tool — HR không cần biết mã ứng viên trước,
-# search_candidates() sẽ tìm giúp trong kho này dựa trên JD).
-CV_REPOSITORY = {
-    "CV1023": {
-        "name": "Nguyễn Văn An",
-        "email": "an.nguyen@email.com",
-        "position": "Backend Python Developer",
-        "experience": "3 năm kinh nghiệm lập trình Python, FastAPI, PostgreSQL, Docker, RESTful API",
-        "education": "Cử nhân CNTT - ĐH Bách Khoa",
-        "projects": "Xây dựng hệ thống microservices phục vụ 100k users/ngày",
-        "status": "Mới nộp hồ sơ",
-    },
-    "CV1024": {
-        "name": "Trần Thị Bích",
-        "email": "bich.tran@email.com",
-        "position": "Data Analyst",
-        "experience": "2 năm làm Data Analyst với SQL, PowerBI, Python, Tableau, Excel",
-        "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
-        "projects": "Xây dựng dashboard phân tích doanh thu kinh doanh",
-        "status": "Đã qua sơ tuyển",
-    },
-    "CV1025": {
-        "name": "Lê Hoàng Cường",
-        "email": "cuong.le@email.com",
-        "position": "Senior Fullstack Developer",
-        "experience": "5 năm kinh nghiệm Fullstack với React, Node.js, TypeScript, AWS",
-        "education": "Cử nhân Khoa học Máy tính - VinUni",
-        "projects": "Leader nhóm 6 devs xây dựng nền tảng E-commerce",
-        "status": "Chờ xếp lịch phỏng vấn",
-    },
-}
+# 📚 KHO CV & DỮ LIỆU TUYỂN DỤNG (Đã tách sang module src/data/data.py)
+try:
+    from data.data import CV_REPOSITORY, CANDIDATE_ALIASES
+except ImportError:
+    import sys
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from data.data import CV_REPOSITORY, CANDIDATE_ALIASES
 
-# Mã ứng viên kiểu cũ (CAND00x) vẫn trỏ về đúng hồ sơ, tránh phá vỡ dữ liệu/test case đã có
-CANDIDATE_ALIASES = {"CAND001": "CV1023", "CAND002": "CV1024", "CAND003": "CV1025"}
+
+def _save_cv_repository():
+    """Lưu tự động toàn bộ kho CV (CV_REPOSITORY) vào file candidates.json trên ổ đĩa (tránh làm Flask restart)."""
+    try:
+        json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "candidates.json")
+        if not os.path.exists(os.path.dirname(json_path)):
+            json_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "data", "candidates.json")
+            
+        data_payload = {
+            "CV_REPOSITORY": CV_REPOSITORY,
+            "CANDIDATE_ALIASES": CANDIDATE_ALIASES,
+        }
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(data_payload, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"⚠️ [WARNING] Không thể lưu file candidates.json: {e}")
+
+
+
 
 _STOPWORDS = {
     "cho", "voi", "cua", "va", "cac", "yeu", "cau", "kinh", "nghiem", "nam",
@@ -101,7 +95,7 @@ def search_candidates(job_description: str) -> str:
         lines = [f"🔎 KẾT QUẢ TÌM KIẾM TRONG KHO CV cho yêu cầu: '{job_description}'"]
         for i, (score, cid, cv) in enumerate(ranked[:3], start=1):
             lines.append(
-                f"{i}. [{cid}] {cv['name']} — {cv['position']} (khớp {score} từ khoá) — {cv['experience']}"
+                f"{i}. [{cid}] {cv['name']} — {cv['position']} (khớp {score} từ khoá) [Trạng thái hiện tại: {cv['status']}] — {cv['experience']}"
             )
         lines.append("Gợi ý: dùng screen_resume trên mã ứng viên phù hợp nhất để chấm điểm chi tiết.")
         return "\n".join(lines)
@@ -136,7 +130,7 @@ def get_candidate_profile(candidate_id: str) -> str:
             f"- Vị trí ứng tuyển: {p['position']}\n"
             f"- Kinh nghiệm & Kỹ năng: {p['experience']}\n"
             f"- Trình độ học vấn: {p['education']}\n"
-            f"- Trạng thái hồ sơ: {p['status']}"
+            f"- Trạng thái hồ sơ trên hệ thống: {p['status']}"
         )
     except Exception as e:
         return f"LỖI HỆ THỐNG: Gặp sự cố ngoài dự kiến khi truy vấn hồ sơ ứng viên: {str(e)}"
@@ -144,14 +138,15 @@ def get_candidate_profile(candidate_id: str) -> str:
 
 def screen_resume(candidate_id: str, job_position: str = "Backend Python Developer") -> str:
     """
-    Sàng lọc và sử dụng Gemini AI để phân tích, đánh giá độ phù hợp của CV ứng viên trực tiếp.
+    Sàng lọc và sử dụng Gemini AI để phân tích, đánh giá độ phù hợp của CV ứng viên trực tiếp,
+    đồng thời tự động cập nhật thuộc tính status (Trạng thái) của ứng viên trong CRM.
 
     Args:
         candidate_id (str): Mã ứng viên cần đánh giá, lấy từ kết quả search_candidates (Ví dụ: 'CV1023')
         job_position (str, optional): Tên vị trí tuyển dụng cần so sánh. Mặc định là 'Backend Python Developer'.
 
     Returns:
-        str: Báo cáo kết quả đánh giá thực tế từ Gemini AI gồm Match Score, Điểm mạnh/yếu và Kết luận ĐẠT / KHÔNG ĐẠT.
+        str: Báo cáo kết quả đánh giá thực tế từ Gemini AI gồm Match Score, Điểm mạnh/yếu, Kết luận ĐẠT / KHÔNG ĐẠT và Trạng thái mới.
     """
     try:
         if not candidate_id or not isinstance(candidate_id, str):
@@ -178,30 +173,50 @@ def screen_resume(candidate_id: str, job_position: str = "Backend Python Develop
             f"- Mã ứng viên: {cid}\n"
             f"- Họ tên: {cv['name']}\n"
             f"- Vị trí đánh giá: {target_job}\n"
+            f"- Trạng thái hiện tại: {cv['status']}\n"
             f"- Kinh nghiệm & Kỹ năng: {cv['experience']}\n"
             f"- Học vấn: {cv['education']}\n"
             f"- Dự án: {cv['projects']}"
         )
 
+        ai_text = None
         if api_key:
             try:
                 from google import genai
                 client = genai.Client(api_key=api_key)
                 model_name = os.getenv("LLM_MODEL") or "gemini-2.0-flash-lite"
                 res = client.models.generate_content(model=model_name, contents=prompt_eval)
-                ai_text = res.text.strip()
-                if ai_text:
-                    return (
-                        f"🔍 [KẾT QUẢ SÀNG LỌC BẰNG GEMINI AI CHO MÃ {cid}]:\n"
-                        f"Vị trí tuyển dụng: {target_job}\n\n"
-                        f"{ai_text}"
-                    )
+                if res.text and res.text.strip():
+                    ai_text = res.text.strip()
             except Exception:
                 pass
+
+        if ai_text:
+            # Cập nhật thuộc tính status dựa trên kết luận từ Gemini AI
+            if "KHÔNG ĐẠT" in ai_text.upper() or "THẤT BẠI" in ai_text.upper() or "TỪ CHỐI" in ai_text.upper():
+                cv["status"] = "Không đạt sơ tuyển (Bị loại)"
+            else:
+                cv["status"] = "Đã qua sơ tuyển (ĐẠT)"
+            
+            _save_cv_repository()
+                
+            return (
+                f"🔍 [KẾT QUẢ SÀNG LỌC BẰNG GEMINI AI CHO MÃ {cid}]:\n"
+                f"Vị trí tuyển dụng: {target_job}\n"
+                f"Trạng thái sơ đồ tuyển dụng mới: {cv['status']}\n\n"
+                f"{ai_text}"
+            )
 
         # Đánh giá Động AI Fallback (Nếu API gặp hạn chế Quota)
         match_score = 88 if ("python" in cv['experience'].lower() or "fullstack" in cv['experience'].lower()) else 75
         status_result = "ĐẠT" if match_score >= 80 else "KHÔNG ĐẠT"
+
+        if status_result == "ĐẠT":
+            cv["status"] = "Đã qua sơ tuyển (ĐẠT)"
+        else:
+            cv["status"] = "Không đạt sơ tuyển (Bị loại)"
+
+        _save_cv_repository()
 
         return (
             f"🔍 [BÁO CÁO ĐÁNH GIÁ AI SÀNG LỌC CV {cid}]:\n"
@@ -209,7 +224,8 @@ def screen_resume(candidate_id: str, job_position: str = "Backend Python Develop
             f"- Vị trí đánh giá: {target_job}\n"
             f"- Điểm số phù hợp (Match Score): {match_score}/100\n"
             f"- Phân tích kỹ năng: {cv['experience']}\n"
-            f"- Kết luận: {status_result} - Đề xuất chuyển sang vòng phỏng vấn chuyên môn."
+            f"- Kết luận: {status_result} - Đề xuất chuyển sang vòng phỏng vấn chuyên môn.\n"
+            f"- Trạng thái hồ sơ mới cập nhật trên CRM: {cv['status']}"
         )
 
     except Exception as e:
@@ -252,7 +268,8 @@ def check_interviewer_availability(interviewer_name: str, date: str) -> str:
 
 def schedule_interview(candidate_id: str, interviewer_name: str, datetime_slot: str, room_location: str = "Phòng họp 302, Tòa nhà VinUni") -> str:
     """
-    Đặt lịch hẹn phỏng vấn CHỈ THEO HÌNH THỨC OFFLINE (Trực tiếp tại văn phòng).
+    Đặt lịch hẹn phỏng vấn CHỈ THEO HÌNH THỨC OFFLINE (Trực tiếp tại văn phòng),
+    và tự động cập nhật trạng thái 'status' của ứng viên thành 'Đã hẹn phỏng vấn Offline'.
 
     Args:
         candidate_id (str): Mã ứng viên (Ví dụ: 'CV1023', 'CAND001')
@@ -261,24 +278,29 @@ def schedule_interview(candidate_id: str, interviewer_name: str, datetime_slot: 
         room_location (str, optional): Địa điểm phòng họp phỏng vấn offline. Mặc định: 'Phòng họp 302, Tòa nhà VinUni'.
 
     Returns:
-        str: Mã lịch hẹn, xác nhận hình thức Phỏng vấn Offline và địa điểm chi tiết.
+        str: Mã lịch hẹn, xác nhận hình thức Phỏng vấn Offline, địa điểm chi tiết và Trạng thái mới cập nhật.
     """
     try:
         if not candidate_id or not interviewer_name or not datetime_slot:
             return "LỖI DỮ LIỆU: Thiếu thông tin bắt buộc (candidate_id, interviewer_name, datetime_slot)."
 
-        cid = candidate_id.strip().upper()
+        cid = _resolve_candidate_id(candidate_id)
         booking_id = f"INT-OFFLINE-{cid}-2026"
+
+        new_status = f"Đã hẹn phỏng vấn Offline ({datetime_slot})"
+        if cid in CV_REPOSITORY:
+            CV_REPOSITORY[cid]["status"] = new_status
+            _save_cv_repository()
 
         return (
             f"✅ ĐẶT LỊCH PHỎNG VẤN OFFLINE THÀNH CÔNG!\n"
             f"- Mã lịch hẹn: {booking_id}\n"
-            f"- Ứng viên: {cid}\n"
+            f"- Mã ứng viên: {cid}\n"
             f"- Người phỏng vấn: {interviewer_name}\n"
             f"- Thời gian: {datetime_slot}\n"
             f"- Hình thức phỏng vấn: OFFLINE (Trực tiếp tại văn phòng)\n"
             f"- Địa điểm phòng họp: {room_location}\n"
-            f"- Trạng thái: Đã lưu trên CRM Tuyển dụng & Đã giữ chỗ phòng họp."
+            f"- Trạng thái hồ sơ mới cập nhật trên CRM: {new_status}"
         )
     except Exception as e:
         return f"LỖI HỆ THỐNG: Không thể đặt lịch phỏng vấn offline do lỗi: {str(e)}"
@@ -286,30 +308,38 @@ def schedule_interview(candidate_id: str, interviewer_name: str, datetime_slot: 
 
 def send_interview_invitation(candidate_id: str, interview_details: str) -> str:
     """
-    Gửi thư mời phỏng vấn tự động qua Email cho ứng viên.
+    Gửi thư mời phỏng vấn tự động qua Email cho ứng viên,
+    và tự động cập nhật trạng thái 'status' của ứng viên thành 'Đã gửi thư mời phỏng vấn Offline'.
 
     Args:
         candidate_id (str): Mã ứng viên nhận thư (Ví dụ: 'CV1023', 'CAND001')
         interview_details (str): Nội dung chi tiết lịch hẹn phỏng vấn Offline (Thời gian, phòng họp, địa điểm)
 
     Returns:
-        str: Thông báo xác nhận trạng thái gửi thư mời thành công.
+        str: Thông báo xác nhận trạng thái gửi thư mời thành công và Trạng thái mới trên CRM.
     """
     try:
         if not candidate_id or not interview_details:
             return "LỖI DỮ LIỆU: Cần truyền candidate_id và interview_details để gửi email thư mời."
 
-        cid = candidate_id.strip().upper()
+        cid = _resolve_candidate_id(candidate_id)
+        new_status = "Đã gửi thư mời phỏng vấn Offline (Chờ phỏng vấn)"
+        if cid in CV_REPOSITORY:
+            CV_REPOSITORY[cid]["status"] = new_status
+            _save_cv_repository()
 
         return (
             f"📧 XÁC NHẬN GỬI THƯ MỜI PHỎNG VẤN THÀNH CÔNG!\n"
             f"- Gửi tới ứng viên mã: {cid}\n"
             f"- Tiêu đề email: [VinUni HR] Thư Mời Phỏng Vấn Offline\n"
             f"- Nội dung đã đính kèm:\n  {interview_details}\n"
-            f"- Trạng thái Email: Đã gửi thành công (Status: Delivered - 200 OK)."
+            f"- Trạng thái Email: Đã gửi thành công (Status: Delivered - 200 OK).\n"
+            f"- Trạng thái hồ sơ mới cập nhật trên CRM: {new_status}"
         )
     except Exception as e:
         return f"LỖI HỆ THỐNG: Không thể gửi email thư mời phỏng vấn: {str(e)}"
+
+
 
 
 # Danh sách các tool được đăng ký để Agent sử dụng trong hệ thống

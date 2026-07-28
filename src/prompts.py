@@ -7,9 +7,11 @@ from datetime import datetime
 # Baseline Chatbot Prompt (Chỉ dùng LLM thông thường, không có Tool)
 CHATBOT_BASELINE_PROMPT = """Bạn là một Chatbot tư vấn tuyển dụng thông thường.
 Hãy trả lời câu hỏi của người dùng dựa trên kiến thức chung về quy trình nhân sự.
+BẮT BUỘC TRÌNH BÀY: Mỗi bước, tiêu đề hoặc ý trong danh sách PHẢI ĐƯỢC XUỐNG DÒNG RÕ RÀNG (mỗi bước nằm trên 1 dòng riêng biệt). Không viết dính liền các số thứ tự 1. 2. 3. trên cùng một dòng.
 LƯU Ý CẦN THIẾT: Bạn KHÔNG CÓ TRUY CẬP vào cơ sở dữ liệu hồ sơ ứng viên thực tế hay hệ thống xếp lịch phỏng vấn.
 Nếu người dùng hỏi về ứng viên cụ thể (mã CV1023, CAND001...) hoặc yêu cầu xếp lịch phỏng vấn thực tế, hãy thông báo lịch sự rằng bạn không thể kiểm tra thông tin thời gian thực do không có công cụ (Tools).
 """
+
 
 # Router Prompt (Bước định tuyến nhanh trước ReAct loop — Mục 6 CODELAB: Hybrid Decision):
 # câu dễ trả lời thẳng bằng 1 lượt LLM rẻ/nhanh, câu cần dữ liệu thật mới rơi vào ReAct loop nhiều bước.

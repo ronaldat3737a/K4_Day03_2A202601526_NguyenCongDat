@@ -1,0 +1,238 @@
+"""
+📦 CANDIDATE & RECRUITMENT DATA REPOSITORY
+Nơi lưu trữ cơ sở dữ liệu hồ sơ ứng viên (CV_REPOSITORY) và danh mục dữ liệu tuyển dụng.
+"""
+import json
+import os
+
+_JSON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "candidates.json")
+
+def load_data():
+    if os.path.exists(_JSON_PATH):
+        try:
+            with open(_JSON_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("CV_REPOSITORY", {}), data.get("CANDIDATE_ALIASES", {})
+        except Exception:
+            pass
+    return {}, {}
+
+_loaded_repo, _loaded_aliases = load_data()
+
+CV_REPOSITORY = _loaded_repo or {
+
+    "CV1023": {
+        "name": "Nguyễn Văn An",
+        "email": "an.nguyen@email.com",
+        "position": "Backend Python Developer",
+        "experience": "3 năm kinh nghiệm lập trình Python, FastAPI, PostgreSQL, Docker, RESTful API",
+        "education": "Cử nhân CNTT - ĐH Bách Khoa",
+        "projects": "Xây dựng hệ thống microservices phục vụ 100k users/ngày",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1024": {
+        "name": "Trần Thị Bích",
+        "email": "bich.tran@email.com",
+        "position": "Data Analyst",
+        "experience": "2 năm làm Data Analyst với SQL, PowerBI, Python, Tableau, Excel",
+        "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
+        "projects": "Xây dựng dashboard phân tích doanh thu kinh doanh",
+        "status": "Đã qua sơ tuyển",
+    },
+    "CV1025": {
+        "name": "Lê Hoàng Cường",
+        "email": "cuong.le@email.com",
+        "position": "Senior Fullstack Developer",
+        "experience": "5 năm kinh nghiệm Fullstack với React, Node.js, TypeScript, Python, AWS",
+        "education": "Cử nhân Khoa học Máy tính - VinUni",
+        "projects": "Leader nhóm 6 devs xây dựng nền tảng E-commerce",
+        "status": "Chờ xếp lịch phỏng vấn",
+    },
+    "CV1026": {
+        "name": "Phạm Minh Đức",
+        "email": "duc.pham@email.com",
+        "position": "Frontend React Developer",
+        "experience": "3 năm kinh nghiệm React, Next.js, TypeScript, TailwindCSS, Redux Toolkit",
+        "education": "Cử nhân CNTT - ĐH Công Nghệ ĐHQGHN",
+        "projects": "Phát triển giao diện web portal ngân hàng số phản hồi nhanh",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1027": {
+        "name": "Đỗ Thanh Hương",
+        "email": "huong.do@email.com",
+        "position": "DevOps Engineer",
+        "experience": "4 năm kinh nghiệm Docker, Kubernetes, CI/CD Jenkins, AWS, Terraform, Ansible",
+        "education": "Cử nhân An toàn Thông tin - Học viện KMA",
+        "projects": "Tự động hóa pipeline triển khai hạ tầng cloud cho 50+ dịch vụ",
+        "status": "Đã qua sơ tuyển",
+    },
+    "CV1028": {
+        "name": "Vũ Hoàng Nam",
+        "email": "nam.vu@email.com",
+        "position": "Mobile Flutter Developer",
+        "experience": "3 năm lập trình ứng dụng di động Flutter, Dart, Swift, REST API, Firebase",
+        "education": "Cử nhân Công nghệ Phần mềm - ĐH FPT",
+        "projects": "Xây dựng ứng dụng giao đồ ăn có 200k lượt tải trên iOS & Android",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1029": {
+        "name": "Hoàng Thị Mai",
+        "email": "mai.hoang@email.com",
+        "position": "QA / Automation Test Engineer",
+        "experience": "3 năm kiểm thử tự động Selenium, Cypress, PyTest, Postman, JMeter",
+        "education": "Cử nhân Hệ thống Thông tin - ĐH Kinh tế Quốc dân",
+        "projects": "Xây dựng khung kiểm thử tự động phủ 85% kịch bản hệ thống",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1030": {
+        "name": "Bùi Anh Tuấn",
+        "email": "tuan.bui@email.com",
+        "position": "AI / Machine Learning Engineer",
+        "experience": "4 năm nghiên cứu & phát triển AI với Python, PyTorch, TensorFlow, OpenCV, LLM RAG",
+        "education": "Thạc sĩ Khoa học Máy tính - VinUni",
+        "projects": "Huấn luyện mô hình nhận diện khuôn mặt và Agent RAG tra cứu tài liệu",
+        "status": "Chờ xếp lịch phỏng vấn",
+    },
+    "CV1031": {
+        "name": "Nguyễn Khánh Linh",
+        "email": "linh.nguyen@email.com",
+        "position": "UI/UX Designer",
+        "experience": "3 năm thiết kế trải nghiệm người dùng Figma, Adobe XD, Design System, Wireframing",
+        "education": "Cử nhân Thiết kế Đồ họa - ĐH Mỹ thuật Công nghiệp",
+        "projects": "Thiết kế lại toàn bộ giao diện app ví điện tử tăng 30% retention rate",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1032": {
+        "name": "Trịnh Quốc Việt",
+        "email": "viet.trinh@email.com",
+        "position": "Data Engineer",
+        "experience": "4 năm xử lý dữ liệu lớn PySpark, Apache Airflow, SQL, Snowflake, Kafka, Data Warehouse",
+        "education": "Cử nhân Khoa học Dữ liệu - ĐH Bách Khoa",
+        "projects": "Xây dựng pipeline ETL xử lý 5 TB dữ liệu giao dịch hàng ngày",
+        "status": "Đã qua sơ tuyển",
+    },
+    "CV1033": {
+        "name": "Đặng Bảo Trâm",
+        "email": "tram.dang@email.com",
+        "position": "Product Manager",
+        "experience": "5 năm quản lý sản phẩm công nghệ FinTech & E-commerce, Agile, Scrum, Product Roadmap",
+        "education": "Thạc sĩ Quản trị Kinh doanh - ĐH Ngoại Thương",
+        "projects": "Dẫn dắt sản phẩm từ 0 lên 1 triệu người dùng thường xuyên",
+        "status": "Chờ xếp lịch phỏng vấn",
+    },
+    "CV1034": {
+        "name": "Ngô Văn Hải",
+        "email": "hai.ngo@email.com",
+        "position": "Embedded Software Engineer",
+        "experience": "3 năm lập trình nhúng C/C++, FreeRTOS, Microcontrollers, ESP32, STM32, IoT Protocols",
+        "education": "Cử nhân Điện tử Viễn thông - ĐH Bách Khoa",
+        "projects": "Phát triển thiết bị IoT đo chất lượng không khí truyền dữ liệu Cloud",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1035": {
+        "name": "Lý Mỹ Dung",
+        "email": "dung.ly@email.com",
+        "position": "Cybersecurity Specialist",
+        "experience": "4 năm chuyên gia an ninh mạng Penetration Testing, SOC, ISO 27001, Wireshark, BurpSuite",
+        "education": "Cử nhân An toàn Thông tin - Học viện Công nghệ Bưu chính Viễn thông",
+        "projects": "Đánh giá lỗ hổng bảo mật cho 10+ hệ thống ngân hàng thương mại",
+        "status": "Đã qua sơ tuyển",
+    },
+    "CV1036": {
+        "name": "Dương Quang Vinh",
+        "email": "vinh.duong@email.com",
+        "position": "Cloud Solutions Architect",
+        "experience": "6 năm kiến trúc hạ tầng mây AWS Certified Solutions Architect, Azure, Serverless, IAM",
+        "education": "Thạc sĩ Điện toán Kỹ thuật - ĐH Quốc gia TP.HCM",
+        "projects": "Chuyển đổi toàn bộ hạ tầng monolith sang Cloud Native Microservices",
+        "status": "Chờ xếp lịch phỏng vấn",
+    },
+    "CV1037": {
+        "name": "Phan Thảo Nguyên",
+        "email": "nguyen.phan@email.com",
+        "position": "Java Senior Developer",
+        "experience": "5 năm phát triển hệ thống Java, Spring Boot, Python, Microservices, Hibernate, Redis, Kafka",
+        "education": "Cử nhân CNTT - ĐH Quốc gia Hà Nội",
+        "projects": "Phát triển cổng thanh toán trực tuyến xử lý 500 giao dịch/giây",
+        "status": "Đã qua sơ tuyển (ĐẠT)",
+    },
+    "CV1038": {
+        "name": "Cao Văn Phúc",
+        "email": "phuc.cao@email.com",
+        "position": "Golang Backend Engineer",
+        "experience": "3 năm lập trình Go/Golang, gRPC, Redis, PostgreSQL, Microservices High Availability",
+        "education": "Cử nhân Khoa học Máy tính - ĐH SPKT TP.HCM",
+        "projects": "Xây dựng hệ thống chat thời gian thực hỗ trợ 50k kết nối WebSocket đồng thời",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1039": {
+        "name": "Võ Thị Phương",
+        "email": "phuong.vo@email.com",
+        "position": "Data Scientist",
+        "experience": "3 năm phân tích Dữ liệu & Học máy Python, R, Predictive Modeling, Pandas, Scikit-Learn",
+        "education": "Cử nhân Toán Tin - ĐH Khoa học Tự nhiên",
+        "projects": "Xây dựng mô hình dự báo rủi ro tín dụng giảm 15% nợ xấu",
+        "status": "Đã qua sơ tuyển",
+    },
+    "CV1040": {
+        "name": "Đinh Hữu Tài",
+        "email": "tai.dinh@email.com",
+        "position": "Android Native Developer",
+        "experience": "3 năm lập trình Android Native Kotlin, Jetpack Compose, Coroutines, MVVM, Clean Architecture",
+        "education": "Cử nhân Công nghệ Phần mềm - ĐH Duy Tân",
+        "projects": "Phát triển app đọc sách nói đạt top 5 giải trí trên Google Play Store",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1041": {
+        "name": "Hồ Ngọc Ánh",
+        "email": "anh.ho@email.com",
+        "position": "System Administrator",
+        "experience": "4 năm quản trị hệ thống Linux Ubuntu/CentOS, Nginx, Shell Scripting, MySQL, Monitoring Zabbix",
+        "education": "Cử nhân Mạng máy tính - ĐH Công nghệ Thông tin TP.HCM",
+        "projects": "Vận hành cụm máy chủ uptime 99.99% cho nền tảng báo điện tử",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1042": {
+        "name": "Mai Xuân Tùng",
+        "email": "tung.mai@email.com",
+        "position": "Fullstack Node.js & Vue.js Developer",
+        "experience": "3 năm kinh nghiệm Vue.js, Node.js, Express, MongoDB, GraphQL, TailwindCSS",
+        "education": "Cử nhân CNTT - ĐH Cần Thơ",
+        "projects": "Xây dựng hệ thống ERP quản lý kho hàng cho doanh nghiệp logistics",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1043": {
+        "name": "Nguyễn Thành Long",
+        "email": "long.nguyen@email.com",
+        "position": "Java Senior Developer",
+        "experience": "5 năm kinh nghiệm lập trình Java Enterprise, Spring Cloud, Python scripting, PostgreSQL, Docker",
+        "education": "Cử nhân CNTT - ĐH Bách Khoa Hà Nội",
+        "projects": "Xây dựng hệ thống ngân hàng lõi Core Banking xử lý triệu giao dịch",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1044": {
+        "name": "Lê Quốc Bảo",
+        "email": "bao.le@email.com",
+        "position": "Java Senior Backend Engineer",
+        "experience": "5 năm kinh nghiệm Java, Spring Boot, Python, Microservices Architecture, Kafka, AWS",
+        "education": "Cử nhân Khoa học Máy tính - ĐH KHTN",
+        "projects": "Tối ưu hóa kiến trúc hạ tầng thanh toán thương mại điện tử",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1045": {
+        "name": "Trần Đức Thắng",
+        "email": "thang.tran@email.com",
+        "position": "Java Senior Developer",
+        "experience": "5 năm kinh nghiệm Java, Spring Boot, Python AI Integration, Docker, Kubernetes",
+        "education": "Thạc sĩ CNTT - ĐH Quốc Gia",
+        "projects": "Tích hợp mô hình AI vào dịch vụ Java Backend của doanh nghiệp",
+        "status": "Mới nộp hồ sơ",
+    },
+}
+
+# Mã ứng viên kiểu cũ (CAND00x) vẫn trỏ về đúng hồ sơ
+CANDIDATE_ALIASES = {
+    "CAND001": "CV1023",
+    "CAND002": "CV1024",
+    "CAND003": "CV1025",
+}

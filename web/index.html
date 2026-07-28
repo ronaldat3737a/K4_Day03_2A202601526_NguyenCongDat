@@ -591,9 +591,13 @@
     return out;
   }
 
-  // Markdown -> HTML tối giản: đủ cho câu trả lời của LLM (đoạn văn, tiêu đề nhỏ, danh sách, bold/italic/code).
+  // Markdown -> HTML: tự động xử lý xuống dòng cho danh sách & các dòng văn bản
   function renderMarkdown(raw) {
-    const text = escapeHtml(stripIcons(raw));
+    if (!raw) return "";
+    // Tự động chèn xuống dòng trước các con số thứ tự bị dính liền (vd: "sau:1. ... kỹ năng.2. ...")
+    let formatted = raw.replace(/([:.\?\!a-zA-ZÀ-ỹ])\s*(\d+[.)]\s+)/g, "$1\n$2");
+    
+    const text = escapeHtml(stripIcons(formatted));
     const lines = text.split("\n");
     let html = "";
     let listType = null;
@@ -601,8 +605,6 @@
 
     const flushPara = () => {
       if (para.length) {
-        // Giữ nguyên xuống dòng thật giữa các dòng liên tiếp (vd "Thought:" và "Action:")
-        // thay vì nối liền bằng dấu cách, để không bị dính chữ/mất tách dòng.
         html += `<p>${para.map(renderInline).join("<br>")}</p>`;
         para = [];
       }
@@ -639,6 +641,7 @@
     closeList();
     return html;
   }
+
 
   async function loadMeta() {
     try {
