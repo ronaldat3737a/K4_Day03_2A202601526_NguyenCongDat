@@ -44,9 +44,37 @@ BẮT ĐẦU:
 """
 
 #  GUARDRAILS CONFIGURATION (PHANH AN TOÀN)
-MAX_ITERATIONS = 4  # Giới hạn tối đa 4 vòng lặp Thought-Action để tránh lặp vô tận
-TIMEOUT_SECONDS = 15  # Timeout cho mỗi lần gọi tool
-SAFE_FALLBACK_MESSAGE = "Hệ thống hiện tại chưa có đủ dữ liệu để xác nhận hoặc đang gặp sự cố kết nối. Vui lòng cung cấp thêm thông tin hoặc thử lại sau."
+
+#  GIỚI HẠN THỰC THI (Execution Limits)
+MAX_ITERATIONS = 4         # Giới hạn số vòng lặp Thought-Action
+TIMEOUT_SECONDS = 15       # Timeout cho mỗi lần gọi API/Tool
+MAX_TOOL_RETRIES = 2       # Số lần thử lại tối đa nếu tool bị lỗi mạng (500, 503)
+
+# RÀNG BUỘC NGHIỆP VỤ HẸN LỊCH (Business Logic Guardrails)
+ALLOWED_INTERVIEW_HOURS = {"start": 8, "end": 17}  # Giờ hành chính (8h sáng - 5h chiều)
+ALLOWED_WEEKDAYS = [0, 1, 2, 3, 4]                 # Thứ 2 đến Thứ 6 (0: Thứ 2)
+MAX_SCHEDULE_DAYS_AHEAD = 14                       # Không cho phép hẹn lịch quá 14 ngày tới
+MIN_NOTICE_HOURS = 4                               # Phải hẹn trước ít nhất 4 tiếng
+
+# BẢO MẬT & CHỐNG HACK (Security & Safety Guardrails)
+# Các từ khóa chặn Prompt Injection hoặc câu hỏi ngoài luồng
+BLOCKED_KEYWORDS = [
+    "ignore all previous instructions", "forget everything",
+    "system prompt", "bỏ qua các lệnh trước", 
+    "lương của giám đốc", "doanh thu công ty"
+]
+
+# Giới hạn độ dài input của ứng viên để tránh spam/tràn bộ nhớ
+MAX_INPUT_LENGTH = 1000 
+
+# 4. XỬ LÝ LỖI CHI TIẾT (Granular Fallback Messages)
+FALLBACK_MESSAGES = {
+    "default": "Hệ thống hiện tại chưa có đủ dữ liệu. Vui lòng cung cấp thêm thông tin.",
+    "timeout": "Kết nối đến kho dữ liệu đang bị chậm. Vui lòng thử lại sau ít phút.",
+    "iteration_limit": "Yêu cầu này hơi phức tạp. Bạn có thể cung cấp thông tin cụ thể hơn (tên, vị trí) được không?",
+    "out_of_hours": "Thời gian bạn chọn ngoài giờ làm việc. Vui lòng chọn khung giờ hành chính (8:00 - 17:00, T2-T6).",
+    "blocked_content": "Xin lỗi, tôi chỉ có thể hỗ trợ các vấn đề liên quan đến tuyển dụng và lịch phỏng vấn."
+}
 
 # Hàm để sinh prompt với thời gian thực (ví dụ khi gọi trong backend)
 def get_react_prompt():
