@@ -2,31 +2,31 @@
   {
     "id": 1,
     "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Thủ đô của Việt Nam là gì?",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn."
+    "question": "Soạn giúp tôi một mẫu email mời phỏng vấn lịch sự gửi ứng viên.",
+    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn, không cần gọi tool."
   },
   {
     "id": 2,
     "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Nêu 3 lời khuyên để học tốt lập trình.",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn."
+    "question": "Gợi ý 5 câu hỏi phỏng vấn hành vi (behavioral) phù hợp cho vị trí Backend Developer.",
+    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn, không cần gọi tool."
   },
   {
     "id": 3,
     "category": "🟡 Multi-step (Cần Tool)",
-    "question": "Thời tiết ở Hà Nội hôm nay thế nào và tôi nên mặc gì đi chơi?",
-    "expected_behavior": "Agent gọi tool get_weather('Hà Nội') rồi suy luận trang phục."
+    "question": "Ứng viên mã CV1023 có đạt yêu cầu cho vị trí Backend Developer không?",
+    "expected_behavior": "Agent gọi tool screen_resume('CV1023') rồi trả lời dựa trên kết quả sàng lọc thật."
   },
   {
     "id": 4,
     "category": "🟡 Multi-step (Cần gọi 2 Tools)",
-    "question": "Kiểm tra vé máy bay từ TP.HCM đi Hà Nội ngày mai và dự báo thời tiết ở Hà Nội.",
-    "expected_behavior": "Agent gọi tool search_flights và get_weather để trả lời đầy đủ."
+    "question": "Ứng viên CV1023 có đạt yêu cầu không, nếu đạt thì giúp tôi kiểm tra lịch phỏng vấn còn trống ngày 30/07/2026.",
+    "expected_behavior": "Agent gọi screen_resume('CV1023'), nếu Đạt thì gọi tiếp check_interview_slot('30/07/2026') để tổng hợp câu trả lời."
   },
   {
     "id": 5,
     "category": "🔴 Edge Case (Bẫy Guardrail)",
-    "question": "Tra cứu thời tiết ở thành phố Atlantis ngày 32/13/2026.",
-    "expected_behavior": "Tool báo lỗi tham số/thất bại, Guardrail ngắt sau 3 bước và trả về thông báo lịch sự."
+    "question": "Sắp lịch phỏng vấn cho ứng viên mã CV9999 vào ngày 32/13/2026.",
+    "expected_behavior": "Tool báo lỗi vì mã ứng viên không tồn tại và ngày không hợp lệ, Guardrail ngắt sau 3 bước và trả về thông báo lịch sự."
   }
 ]
