@@ -160,36 +160,41 @@ def screen_resume(candidate_id: str, job_position: str = "Backend Python Develop
         cv = candidates_db[cid]
         target_job = job_position.strip() if job_position else cv["position"]
 
-        # 🤖 GỌI GEMINI AI ĐÁNH GIÁ TRỰC TIẾP TRONG HÀM
+        # 🤖 GỌI GEMINI AI ĐÁNH GIÁ TRỰC TIẾP
         api_key = os.getenv("GEMINI_API_KEY")
         
+        try:
+            from prompts import SCREEN_RESUME_PROMPT
+        except ImportError:
+            SCREEN_RESUME_PROMPT = "Bạn là Chuyên gia Tuyển dụng HR Senior. Hãy phân tích CV ứng viên so với vị trí tuyển dụng."
+
         prompt_eval = (
-            f"Bạn là Chuyên gia Tuyển dụng HR Senior. Hãy đánh giá CV ứng viên sau cho vị trí '{target_job}':\n\n"
-            f"Họ tên ứng viên: {cv['name']}\n"
-            f"Kinh nghiệm & Kỹ năng: {cv['experience']}\n"
-            f"Học vấn: {cv['education']}\n"
-            f"Dự án: {cv['projects']}\n\n"
-            f"Hãy đưa ra phân tích chi tiết bao gồm:\n"
-            f"- Match Score: [Điểm/100]\n"
-            f"- Điểm mạnh:\n"
-            f"- Điểm cần lưu ý:\n"
-            f"- Kết luận: [ĐẠT / KHÔNG ĐẠT] (Và lời khuyên cho vòng tiếp theo)."
+            f"{SCREEN_RESUME_PROMPT}\n\n"
+            f"--- THÔNG TIN HỒ SƠ ỨNG VIÊN CẦN SÀNG LỌC ---\n"
+            f"- Mã ứng viên: {cid}\n"
+            f"- Họ tên: {cv['name']}\n"
+            f"- Vị trí đánh giá: {target_job}\n"
+            f"- Kinh nghiệm & Kỹ năng: {cv['experience']}\n"
+            f"- Học vấn: {cv['education']}\n"
+            f"- Dự án: {cv['projects']}"
         )
 
-        if api_key and api_key != "your_gemini_api_key_here":
+        if api_key:
             try:
                 from google import genai
                 client = genai.Client(api_key=api_key)
-                # Đổi sang model Gemini sẵn có trong dự án
-                res = client.models.generate_content(model="gemini-2.0-flash-lite", contents=prompt_eval)
+                model_name = os.getenv("LLM_MODEL") or "gemini-2.0-flash-lite"
+                res = client.models.generate_content(model=model_name, contents=prompt_eval)
                 ai_text = res.text.strip()
-                return (
-                    f"🔍 [KẾT QUẢ SÀNG LỌC BẰNG GEMINI AI CHO MÃ {cid}]:\n"
-                    f"Vị trí tuyển dụng: {target_job}\n\n"
-                    f"{ai_text}"
-                )
+                if ai_text:
+                    return (
+                        f"🔍 [KẾT QUẢ SÀNG LỌC BẰNG GEMINI AI CHO MÃ {cid}]:\n"
+                        f"Vị trí tuyển dụng: {target_job}\n\n"
+                        f"{ai_text}"
+                    )
             except Exception:
                 pass
+
 
         # Đánh giá Động AI Fallback (Nếu API gặp hạn chế Quota)
         match_score = 88 if ("python" in cv['experience'].lower() or "fullstack" in cv['experience'].lower()) else 75
