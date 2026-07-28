@@ -2,26 +2,26 @@
   {
     "id": 1,
     "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Quy trình tuyển dụng ở công ty thường gồm những vòng nào?",
+    "question": "Soạn giúp tôi một mẫu email mời phỏng vấn lịch sự gửi ứng viên.",
     "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn, không cần gọi tool."
   },
   {
     "id": 2,
     "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Tôi nên chuẩn bị gì cho vòng phỏng vấn kỹ thuật?",
+    "question": "Gợi ý 5 câu hỏi phỏng vấn hành vi (behavioral) phù hợp cho vị trí Backend Developer.",
     "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn, không cần gọi tool."
   },
   {
     "id": 3,
     "category": "🟡 Multi-step (Cần Tool)",
-    "question": "Ứng viên mã CV1023 có đạt yêu cầu cho vị trí Backend Developer không?",
-    "expected_behavior": "Agent gọi tool screen_candidate('CV1023') rồi trả lời dựa trên kết quả sàng lọc thật."
+    "question": "Cho tôi xem thông tin chi tiết hồ sơ ứng viên CV1023.",
+    "expected_behavior": "Agent gọi tool get_candidate_profile('CV1023') rồi trả lời dựa trên thông tin hồ sơ thật."
   },
   {
     "id": 4,
-    "category": "🟡 Multi-step (Cần gọi 2 Tools)",
-    "question": "Ứng viên CV1023 có đạt yêu cầu không, nếu đạt thì giúp tôi kiểm tra lịch phỏng vấn còn trống ngày 30/07/2026.",
-    "expected_behavior": "Agent gọi screen_candidate('CV1023'), nếu Đạt thì gọi tiếp check_interview_slot('30/07/2026') để tổng hợp câu trả lời."
+    "category": "🟡 Multi-step (Cần gọi nhiều Tools)",
+    "question": "Ứng viên CV1023 có đạt yêu cầu vị trí Backend Developer không? Nếu đạt, kiểm tra lịch rảnh của chị Lan (Tech Lead) ngày 30/07/2026, đặt lịch phỏng vấn Online và gửi thư mời cho ứng viên.",
+    "expected_behavior": "Agent gọi lần lượt screen_resume('CV1023', 'Backend Developer') -> check_interviewer_availability('chị Lan', '30/07/2026') -> schedule_interview(...) -> send_interview_invitation(...) rồi tổng hợp câu trả lời."
   },
   {
     "id": 5,
