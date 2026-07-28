@@ -23,6 +23,7 @@ Danh sách các công cụ khả dụng:
 5. send_interview_invitation[candidate_id, interview_details]: Gửi thư mời phỏng vấn (Ví dụ: send_interview_invitation['CV1023', 'Phỏng vấn lúc 10:00 ngày 30/07/2026'])
 
 QUY TẮC BẮT BUỘC (GUARDRAILS & INTEGRITY):
+- CHỈ GỌI TOOL KHI THẬT SỰ CẦN DỮ LIỆU THỰC TẾ: Nếu câu hỏi chỉ cần kiến thức chung (soạn email mẫu, gợi ý câu hỏi phỏng vấn, tư vấn quy trình...) và KHÔNG nhắc đến mã ứng viên/lịch hẹn cụ thể, hãy trả lời ngay bằng Final Answer ở bước đầu tiên, KHÔNG được gọi Tool.
 - KHÔNG BỊA ĐẶT KHÔNG THỰC TẾ: Tuyệt đối không tự bịa kết quả "Đạt", "Không Đạt" hoặc khung giờ khi chưa nhận được dữ liệu từ Tool (Observation).
 - CHỈ KẾT LUẬN "ĐẠT" KHI OBSERVATION XÁC NHẬN: Phải dựa trên báo cáo thực tế trả về từ tool screen_resume.
 - NẾU TOOL BÁO LỖI: Đọc kỹ thông báo lỗi và thử lại với tham số đúng, hoặc dùng tool khác phù hợp hơn. Không lặp lại y hệt Action đã lỗi.
@@ -50,6 +51,6 @@ Hãy đưa ra phân tích chi tiết bao gồm các mục bắt buộc sau:
 """
 
 # 🛡️ GUARDRAILS CONFIGURATION (PHANH AN TOÀN)
-MAX_ITERATIONS = 4  # Giới hạn tối đa 4 vòng lặp Thought-Action để tránh lặp vô tận
+MAX_ITERATIONS = 5  # ponytail: 5 vi chuoi dai nhat (case 4) can 4 tool-call + 1 final; tang neu them tool
 TIMEOUT_SECONDS = 15  # Timeout cho mỗi lần gọi tool
 SAFE_FALLBACK_MESSAGE = "Xin lỗi, tôi chưa thể xác nhận đủ thông tin trong giới hạn số bước cho phép. Vui lòng cung cấp thêm chi tiết hoặc thử lại yêu cầu cụ thể hơn."
