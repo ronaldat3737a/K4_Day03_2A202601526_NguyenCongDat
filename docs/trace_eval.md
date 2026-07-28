@@ -182,26 +182,26 @@ Thought 5: Vẫn chưa giải quyết được.
 | Gửi batch 100 CV cùng lúc | Agent xử lý tuần tự, không crash (MAX_ITERATIONS=5 mỗi câu) | ✅ |
 | Gọi tool với sai cú pháp `Action: not_a_tool[x]` | `parse_action` không match → Observation: "LỖI: Tool 'not_a_tool' không tồn tại" | ✅ |
 
-### 📊 Hybrid Decision Flowchart
+### Hybrid Decision Flowchart
 ```mermaid
 flowchart TD
-    A[Nhận câu hỏi người dùng] --> B{Cần dữ liệu bên ngoài?}
-    B -- Không (email, gợi ý, tư vấn) --> C[Chatbot Baseline Path]
-    B -- Có (tra cứu CV, xếp lịch...) --> D[ReAct Agent Path]
-    C --> E[Gọi LLM trả lời trực tiếp]
-    D --> F[Thought: Phân tích cần tool nào]
-    F --> G[Action: Gọi tool theo format Action:ten[param]]
-    G --> H{parse_action tìm thấy Action?}
-    H -- Có --> I[execute_tool Tool thật]
-    I --> J[Observation: Kết quả từ tool]
-    J --> K{Thông tin đủ? Cần bước nữa?}
-    K -- Có (multi-step) --> F
-    K -- Không --> L[Tổng hợp Final Answer]
-    H -- Không (parse lỗi) --> M[Observation: LỖI format Action]
+    A[Nhan cau hoi] --> B{Can du lieu ngoai?}
+    B -- KHONG --> C[Chatbot Path]
+    B -- CO --> D[ReAct Agent Path]
+    C --> E[Goi LLM tra loi truc tiep]
+    D --> F[Thought: Phan tich can tool nao]
+    F --> G[Action: goi tool]
+    G --> H{Found Action?}
+    H -- CO --> I[execute_tool thuc]
+    I --> J[Observation: Ket qua tu tool]
+    J --> K{Du thong tin? Can buoc tiep?}
+    K -- CO --> F
+    K -- KHONG --> L[Tong hop Final Answer]
+    H -- KHONG --> M[Loi format Action]
     M --> F
-    K -. Quá MAX_ITERATIONS .-> N[🛡️ GUARDRAIL TRIGGERED]
+    K -. DA MAX_ITERATIONS .-> N[Guardrail trigger]
     N --> O[Safe Fallback Message]
-    O --> P[Trả phản hồi lịch sự cho người dùng]
+    O --> P[Tra phan hinh su cho nguoi dung]
 ```
 
 ---
