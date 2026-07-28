@@ -17,7 +17,7 @@ Dựa trên 5 test cases từ `config/test_cases.json`:
 
 ---
 
-## 🔍 2. SO SÁNH PHẢN HỒI CHATBOT BASELINE — MỐC 2
+## 🔍 2. SO SÁNH PHẢN HỒI CHATBOT BASELINE — MỐC 2 (5 Test Cases từ config/test_cases.json)
 
 ### Test Case #1 (🟢 Đơn giản — LLM only):
 **Câu hỏi**: *"Soạn giúp tôi một mẫu email mời phỏng vấn lịch sự gửi ứng viên."*
@@ -29,6 +29,20 @@ Dựa trên 5 test cases từ `config/test_cases.json`:
 ### 🧠 ReAct Agent:
 * **Thought**: Câu hỏi đơn giản, không cần tra cứu dữ liệu. Gửi trực tiếp.
 * **Final Answer**: *"Dưới đây là mẫu email mời phỏng vấn lịch sự:..."*
+* **Nhận xét**: ✅ Cả Chatbot và ReAct Agent đều xử lý tốt ở mức đơn giản.
+
+---
+
+### Test Case #2 (🟢 Đơn giản — LLM only):
+**Câu hỏi**: *"Gợi ý 5 câu hỏi phỏng vấn hành vi (behavioral) phù hợp cho vị trí Backend Developer."*
+
+### 🤖 Chatbot Baseline:
+* **Phản hồi**: *"Dưới đây là 5 câu hỏi behavioral phù hợp: 1. Tell me about a time you had to debug a critical production issue... 2. Describe a situation where you had to learn a new technology quickly..."*
+* **Nhận xét**: ✅ Chatbot trả lời tốt — câu này không cần tool, chỉ cần kiến thức có sẵn.
+
+### 🧠 ReAct Agent:
+* **Thought**: Câu hỏi đơn giản, không cần tra cứu dữ liệu. Gửi trực tiếp.
+* **Final Answer**: *"5 câu hỏi behavioral cho Backend Developer:..."*
 * **Nhận xét**: ✅ Cả Chatbot và ReAct Agent đều xử lý tốt ở mức đơn giản.
 
 ---
