@@ -1,0 +1,16 @@
+flowchart TD
+    A[Nhận câu hỏi từ người dùng] --> Z[Guardrail bảo mật: chặn từ khoá injection / input quá dài]
+    Z -- Vi phạm --> ZZ[Trả lời từ chối lịch sự, dừng ngay]
+    Z -- Hợp lệ --> B[ROUTER_PROMPT: 1 lượt LLM rẻ]
+    B -- Trả lời được ngay --> C[Chatbot Path: trả lời trực tiếp, 0 tool]
+    B -- "NEEDS_TOOL" --> D[ReAct Agent Path]
+    D --> F[Thought: Phân tích bài toán]
+    F --> G[Action: Gọi tool phù hợp trong 6 tool]
+    G --> H{Tool thành công?}
+    H -- Có --> I[Observation thật được chèn vào context]
+    I --> J{Cần thêm bước nữa?}
+    J -- Có, multi-step --> F
+    J -- Không --> K[Final Answer chi tiết: tên, mã, Match Score, kỹ năng, bước tiếp theo]
+    H -- Lỗi --> L[Observation lỗi trả về cho model tự sửa]
+    L --> J
+    F -. chạm MAX_ITERATIONS .-> M[Safe Fallback: thông báo lịch sự]

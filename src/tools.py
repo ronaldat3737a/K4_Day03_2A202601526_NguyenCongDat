@@ -5,16 +5,116 @@ Nơi định nghĩa các công cụ (Tools) cho ReAct Agent thực thi thao tác
 """
 
 import os
+import re
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# 📚 KHO CV (Nguồn dữ liệu dùng chung cho mọi tool — HR không cần biết mã ứng viên trước,
+# search_candidates() sẽ tìm giúp trong kho này dựa trên JD).
+CV_REPOSITORY = {
+    "CV1023": {
+        "name": "Nguyễn Văn An",
+        "email": "an.nguyen@email.com",
+        "position": "Backend Python Developer",
+        "experience": "3 năm kinh nghiệm lập trình Python, FastAPI, PostgreSQL, Docker, RESTful API",
+        "education": "Cử nhân CNTT - ĐH Bách Khoa",
+        "projects": "Xây dựng hệ thống microservices phục vụ 100k users/ngày",
+        "status": "Mới nộp hồ sơ",
+    },
+    "CV1024": {
+        "name": "Trần Thị Bích",
+        "email": "bich.tran@email.com",
+        "position": "Data Analyst",
+        "experience": "2 năm làm Data Analyst với SQL, PowerBI, Python, Tableau, Excel",
+        "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
+        "projects": "Xây dựng dashboard phân tích doanh thu kinh doanh",
+        "status": "Đã qua sơ tuyển",
+    },
+    "CV1025": {
+        "name": "Lê Hoàng Cường",
+        "email": "cuong.le@email.com",
+        "position": "Senior Fullstack Developer",
+        "experience": "5 năm kinh nghiệm Fullstack với React, Node.js, TypeScript, AWS",
+        "education": "Cử nhân Khoa học Máy tính - VinUni",
+        "projects": "Leader nhóm 6 devs xây dựng nền tảng E-commerce",
+        "status": "Chờ xếp lịch phỏng vấn",
+    },
+}
+
+# Mã ứng viên kiểu cũ (CAND00x) vẫn trỏ về đúng hồ sơ, tránh phá vỡ dữ liệu/test case đã có
+CANDIDATE_ALIASES = {"CAND001": "CV1023", "CAND002": "CV1024", "CAND003": "CV1025"}
+
+_STOPWORDS = {
+    "cho", "voi", "cua", "va", "cac", "yeu", "cau", "kinh", "nghiem", "nam",
+    "vi", "tri", "tu", "kho", "hien", "co", "toi", "thieu", "nhat", "trong",
+}
+
+
+def _resolve_candidate_id(candidate_id: str) -> str:
+    cid = (candidate_id or "").strip().upper()
+    return CANDIDATE_ALIASES.get(cid, cid)
+
+
+def _strip_accents(text: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", text) if unicodedata.category(c) != "Mn")
+
+
+def search_candidates(job_description: str) -> str:
+    """
+    Tìm ứng viên phù hợp trong kho CV dựa trên mô tả công việc (JD) — KHÔNG cần biết trước mã ứng viên.
+
+    Args:
+        job_description (str): Mô tả vị trí/yêu cầu tuyển dụng (Ví dụ: 'Backend Developer có kinh nghiệm Python, FastAPI')
+
+    Returns:
+        str: Danh sách ứng viên khớp trong kho CV, xếp theo độ khớp từ khoá, hoặc thông báo không tìm thấy.
+    """
+    try:
+        if not job_description or not isinstance(job_description, str):
+            return "LỖI DỮ LIỆU: Cần cung cấp mô tả công việc (job_description) để tìm trong kho CV."
+
+        jd_words = {
+            w for w in re.findall(r"[a-zA-Z0-9]+", _strip_accents(job_description.lower()))
+            if len(w) >= 3 and w not in _STOPWORDS
+        }
+        if not jd_words:
+            return "LỖI DỮ LIỆU: Mô tả công việc quá ngắn hoặc không có từ khoá để tìm kiếm."
+
+        ranked = []
+        for cid, cv in CV_REPOSITORY.items():
+            cv_text = f"{cv['position']} {cv['experience']} {cv['projects']}"
+            cv_words = set(re.findall(r"[a-zA-Z0-9]+", _strip_accents(cv_text.lower())))
+            score = len(jd_words & cv_words)
+            if score > 0:
+                ranked.append((score, cid, cv))
+
+        if not ranked:
+            positions = ", ".join(sorted({cv["position"] for cv in CV_REPOSITORY.values()}))
+            return (
+                f"LỖI KHÔNG TÌM THẤY: Không có ứng viên nào trong kho CV khớp với yêu cầu '{job_description}'. "
+                f"Kho CV hiện chỉ có các vị trí: {positions}."
+            )
+
+        ranked.sort(key=lambda x: x[0], reverse=True)
+        lines = [f"🔎 KẾT QUẢ TÌM KIẾM TRONG KHO CV cho yêu cầu: '{job_description}'"]
+        for i, (score, cid, cv) in enumerate(ranked[:3], start=1):
+            lines.append(
+                f"{i}. [{cid}] {cv['name']} — {cv['position']} (khớp {score} từ khoá) — {cv['experience']}"
+            )
+        lines.append("Gợi ý: dùng screen_resume trên mã ứng viên phù hợp nhất để chấm điểm chi tiết.")
+        return "\n".join(lines)
+    except Exception as e:
+        return f"LỖI HỆ THỐNG: Gặp sự cố khi tìm kiếm trong kho CV: {str(e)}"
+
 
 def get_candidate_profile(candidate_id: str) -> str:
     """
     Tra cứu thông tin chi tiết hồ sơ (CV) của ứng viên theo Mã ứng viên.
 
     Args:
-        candidate_id (str): Mã định danh duy nhất của ứng viên (Ví dụ: 'CV1023', 'CAND001', 'CAND002')
+        candidate_id (str): Mã định danh duy nhất của ứng viên (Ví dụ: 'CV1023', 'CAND001')
 
     Returns:
         str: Chi tiết hồ sơ gồm họ tên, vị trí ứng tuyển, kinh nghiệm, kỹ năng, bằng cấp và trạng thái hiện tại.
@@ -22,63 +122,13 @@ def get_candidate_profile(candidate_id: str) -> str:
     try:
         if not candidate_id or not isinstance(candidate_id, str):
             return "LỖI DỮ LIỆU: Mã ứng viên không hợp lệ. Vui lòng cung cấp chuỗi candidate_id hợp lệ."
-        
-        cid = candidate_id.strip().upper()
-        profiles = {
-            "CAND001": {
-                "name": "Nguyễn Văn An",
-                "email": "an.nguyen@email.com",
-                "position": "Backend Python Developer",
-                "experience": "3 năm kinh nghiệm Python, FastAPI, PostgreSQL, Docker",
-                "education": "Cử nhân CNTT - ĐH Bách Khoa",
-                "status": "Mới nộp hồ sơ"
-            },
-            "CV1023": {
-                "name": "Nguyễn Văn An",
-                "email": "an.nguyen@email.com",
-                "position": "Backend Python Developer",
-                "experience": "3 năm kinh nghiệm Python, FastAPI, PostgreSQL, Docker",
-                "education": "Cử nhân CNTT - ĐH Bách Khoa",
-                "status": "Mới nộp hồ sơ"
-            },
-            "CAND002": {
-                "name": "Trần Thị Bích",
-                "email": "bich.tran@email.com",
-                "position": "Data Analyst",
-                "experience": "2 năm kinh nghiệm SQL, PowerBI, Python, Excel",
-                "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
-                "status": "Đã qua sơ tuyển"
-            },
-            "CV1024": {
-                "name": "Trần Thị Bích",
-                "email": "bich.tran@email.com",
-                "position": "Data Analyst",
-                "experience": "2 năm kinh nghiệm SQL, PowerBI, Python, Excel",
-                "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
-                "status": "Đã qua sơ tuyển"
-            },
-            "CAND003": {
-                "name": "Lê Hoàng Cường",
-                "email": "cuong.le@email.com",
-                "position": "Senior Fullstack Developer",
-                "experience": "5 năm kinh nghiệm React, Node.js, TypeScript, AWS",
-                "education": "Cử nhân Khoa học Máy tính - VinUni",
-                "status": "Chờ xếp lịch phỏng vấn"
-            },
-            "CV1025": {
-                "name": "Lê Hoàng Cường",
-                "email": "cuong.le@email.com",
-                "position": "Senior Fullstack Developer",
-                "experience": "5 năm kinh nghiệm React, Node.js, TypeScript, AWS",
-                "education": "Cử nhân Khoa học Máy tính - VinUni",
-                "status": "Chờ xếp lịch phỏng vấn"
-            }
-        }
-        
-        if cid not in profiles:
-            return f"LỖI KHÔNG TÌM THẤY: Không tìm thấy hồ sơ cho mã ứng viên '{candidate_id}'. Các mã có sẵn trong CRM: CV1023 (CAND001), CV1024 (CAND002), CV1025 (CAND003)."
-        
-        p = profiles[cid]
+
+        cid = _resolve_candidate_id(candidate_id)
+        if cid not in CV_REPOSITORY:
+            valid = ", ".join(CV_REPOSITORY.keys())
+            return f"LỖI KHÔNG TÌM THẤY: Không tìm thấy hồ sơ cho mã ứng viên '{candidate_id}'. Các mã có sẵn trong kho CV: {valid}. Dùng search_candidates nếu chưa biết mã ứng viên."
+
+        p = CV_REPOSITORY[cid]
         return (
             f"📋 THÔNG TIN HỒ SƠ ỨNG VIÊN [{cid}]:\n"
             f"- Họ và tên: {p['name']}\n"
@@ -97,7 +147,7 @@ def screen_resume(candidate_id: str, job_position: str = "Backend Python Develop
     Sàng lọc và sử dụng Gemini AI để phân tích, đánh giá độ phù hợp của CV ứng viên trực tiếp.
 
     Args:
-        candidate_id (str): Mã ứng viên cần đánh giá (Ví dụ: 'CV1023', 'CAND001')
+        candidate_id (str): Mã ứng viên cần đánh giá, lấy từ kết quả search_candidates (Ví dụ: 'CV1023')
         job_position (str, optional): Tên vị trí tuyển dụng cần so sánh. Mặc định là 'Backend Python Developer'.
 
     Returns:
@@ -107,62 +157,16 @@ def screen_resume(candidate_id: str, job_position: str = "Backend Python Develop
         if not candidate_id or not isinstance(candidate_id, str):
             return "LỖI DỮ LIỆU: Thiếu mã ứng viên hợp lệ (candidate_id)."
 
-        cid = candidate_id.strip().upper()
-        
-        candidates_db = {
-            "CAND001": {
-                "name": "Nguyễn Văn An",
-                "position": "Backend Python Developer",
-                "experience": "3 năm kinh nghiệm lập trình Python, FastAPI, PostgreSQL, Docker, RESTful API",
-                "education": "Cử nhân CNTT - ĐH Bách Khoa",
-                "projects": "Xây dựng hệ thống microservices phục vụ 100k users/ngày"
-            },
-            "CV1023": {
-                "name": "Nguyễn Văn An",
-                "position": "Backend Python Developer",
-                "experience": "3 năm kinh nghiệm lập trình Python, FastAPI, PostgreSQL, Docker, RESTful API",
-                "education": "Cử nhân CNTT - ĐH Bách Khoa",
-                "projects": "Xây dựng hệ thống microservices phục vụ 100k users/ngày"
-            },
-            "CAND002": {
-                "name": "Trần Thị Bích",
-                "position": "Data Analyst",
-                "experience": "2 năm làm Data Analyst với SQL, PowerBI, Python, Tableau, Excel",
-                "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
-                "projects": "Xây dựng dashboard phân tích doanh thu kinh doanh"
-            },
-            "CV1024": {
-                "name": "Trần Thị Bích",
-                "position": "Data Analyst",
-                "experience": "2 năm làm Data Analyst với SQL, PowerBI, Python, Tableau, Excel",
-                "education": "Cử nhân Khoa học Dữ liệu - ĐH KHTN",
-                "projects": "Xây dựng dashboard phân tích doanh thu kinh doanh"
-            },
-            "CAND003": {
-                "name": "Lê Hoàng Cường",
-                "position": "Senior Fullstack Developer",
-                "experience": "5 năm kinh nghiệm Fullstack với React, Node.js, TypeScript, AWS",
-                "education": "Cử nhân Khoa học Máy tính - VinUni",
-                "projects": "Leader nhóm 6 devs xây dựng nền tảng E-commerce"
-            },
-            "CV1025": {
-                "name": "Lê Hoàng Cường",
-                "position": "Senior Fullstack Developer",
-                "experience": "5 năm kinh nghiệm Fullstack với React, Node.js, TypeScript, AWS",
-                "education": "Cử nhân Khoa học Máy tính - VinUni",
-                "projects": "Leader nhóm 6 devs xây dựng nền tảng E-commerce"
-            }
-        }
+        cid = _resolve_candidate_id(candidate_id)
+        if cid not in CV_REPOSITORY:
+            return f"LỖI KHÔNG TÌM THẤY: Không thể sàng lọc. Không có dữ liệu cho ứng viên '{candidate_id}' trong kho CV. Dùng search_candidates trước để tìm đúng mã."
 
-        if cid not in candidates_db:
-            return f"LỖI KHÔNG TÌM THẤY: Không thể sàng lọc. Không có dữ liệu cho ứng viên '{candidate_id}' trong CRM."
-
-        cv = candidates_db[cid]
+        cv = CV_REPOSITORY[cid]
         target_job = job_position.strip() if job_position else cv["position"]
 
         # 🤖 GỌI GEMINI AI ĐÁNH GIÁ TRỰC TIẾP
         api_key = os.getenv("GEMINI_API_KEY")
-        
+
         try:
             from prompts import SCREEN_RESUME_PROMPT
         except ImportError:
@@ -195,11 +199,10 @@ def screen_resume(candidate_id: str, job_position: str = "Backend Python Develop
             except Exception:
                 pass
 
-
         # Đánh giá Động AI Fallback (Nếu API gặp hạn chế Quota)
         match_score = 88 if ("python" in cv['experience'].lower() or "fullstack" in cv['experience'].lower()) else 75
         status_result = "ĐẠT" if match_score >= 80 else "KHÔNG ĐẠT"
-        
+
         return (
             f"🔍 [BÁO CÁO ĐÁNH GIÁ AI SÀNG LỌC CV {cid}]:\n"
             f"- Ứng viên: {cv['name']}\n"
@@ -227,7 +230,7 @@ def check_interviewer_availability(interviewer_name: str, date: str) -> str:
     try:
         if not interviewer_name or not date:
             return "LỖI DỮ LIỆU: Cần nhập đầy đủ người phỏng vấn (interviewer_name) và ngày (date)."
-            
+
         name_lower = interviewer_name.lower()
         if "mai" in name_lower or "hr" in name_lower:
             slots = ["09:00 - 10:00", "10:30 - 11:30", "14:00 - 15:00", "15:30 - 16:30"]
@@ -263,10 +266,10 @@ def schedule_interview(candidate_id: str, interviewer_name: str, datetime_slot: 
     try:
         if not candidate_id or not interviewer_name or not datetime_slot:
             return "LỖI DỮ LIỆU: Thiếu thông tin bắt buộc (candidate_id, interviewer_name, datetime_slot)."
-            
+
         cid = candidate_id.strip().upper()
         booking_id = f"INT-OFFLINE-{cid}-2026"
-        
+
         return (
             f"✅ ĐẶT LỊCH PHỎNG VẤN OFFLINE THÀNH CÔNG!\n"
             f"- Mã lịch hẹn: {booking_id}\n"
@@ -295,9 +298,9 @@ def send_interview_invitation(candidate_id: str, interview_details: str) -> str:
     try:
         if not candidate_id or not interview_details:
             return "LỖI DỮ LIỆU: Cần truyền candidate_id và interview_details để gửi email thư mời."
-            
+
         cid = candidate_id.strip().upper()
-        
+
         return (
             f"📧 XÁC NHẬN GỬI THƯ MỜI PHỎNG VẤN THÀNH CÔNG!\n"
             f"- Gửi tới ứng viên mã: {cid}\n"
@@ -311,11 +314,10 @@ def send_interview_invitation(candidate_id: str, interview_details: str) -> str:
 
 # Danh sách các tool được đăng ký để Agent sử dụng trong hệ thống
 AVAILABLE_TOOLS = {
+    "search_candidates": search_candidates,
     "get_candidate_profile": get_candidate_profile,
     "screen_resume": screen_resume,
     "check_interviewer_availability": check_interviewer_availability,
     "schedule_interview": schedule_interview,
     "send_interview_invitation": send_interview_invitation,
 }
-
-
